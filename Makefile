@@ -32,10 +32,10 @@ check: $(TEST_OBJS)
 	$(CC) $(CFLAGS) tests/test.c $(TEST_OBJS) -o tst
 	./tst
 
-%.o: %.c $(HEADERS)
+%.o: %.c $(HEADERS) compat.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-%.lo: %.c $(HEADERS)
+%.lo: %.c $(HEADERS) compat.h
 	$(CC) $(CFLAGS) $(PIC_FLAG) -c $< -o $@
 
 libsref.$(STATIC_EXT): $(OBJS)
