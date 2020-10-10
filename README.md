@@ -1,0 +1,2 @@
+# libsref
+Scalable reference counting
