@@ -6,14 +6,14 @@ This document specifies the design decisions for libsref.
 
 Reference counting is a method for managing memory. With reference counting,
 an object has an associated _reference count_ - an integer that specifies
-the number of users that particular object has. Every object starts with a
+the number of users that  particular object has. Every object starts with a
 reference count of 1, and with each time it is used, this count is incremented;
 similarly, when it is no longer used, the count drops by 1. When the reference
 count reaches 0, it is deallocated and no longer valid.
 
 ## Reference counting in memory-unsafe languages
 
-Reference countins is quite common in the runtime of several high level
+Reference counting is quite common in the runtime of several high level
 languages like Python or Perl. However, when applied to languages like C and
 C++, care must be taken when multiple threads are involved.
 
@@ -26,7 +26,7 @@ was dropped to 0 by another thread unreferencing it.
 ## Atomic updates
 
 A common fix to the above problem involves using _atomic operations_ on the
-reference count so that different threads can operate safely on the counter.
+reference count so that different threads can operate safely on the object.
 
 In the above scenario, a thread that wishes to use a reference counted object
 would first try to increment the counter, but only if it wasn't 0. If it was,
@@ -34,7 +34,7 @@ that means the object was already deallocated and therefore invalid.
 
 While atomic updates can solve the problem, it's worth pointing out that this
 solution is rather heavy-handed: Atomic operations are very expensive, even
-in modern hardware, and they severly limit the scalability of using multiple
+in modern hardware, and they severely limit the scalability of using multiple
 reference counted objects in a multithreaded situation. Unless the counter is
 aligned to a cache line, there is expected to be a lot of false sharing, but
 if it **is** aligned, then it comes at the price of much bigger objects.

@@ -77,7 +77,7 @@ void sref_read_enter (void);
 
 Make the calling thread enter a read-side critical section. As long as any
 thread is in a critical section, no **Sref** will be finalized. As such, this
-call is typicall done _before_ reading a pointer that could be potentially
+call is typically done _before_ reading a pointer that could be potentially
 modified by another thread.
 
 Critical sections can be nested, and so threads maintain a counter that
