@@ -1,6 +1,6 @@
 #include "sref.h"
 #include <stdio.h>
-#include <threads.h>
+#include <pthread.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <time.h>
@@ -52,7 +52,7 @@ static Object *array_2[N_ELEM];
 
 #define N_LOOPS   100
 
-static int
+static void*
 reader (void *arg)
 {
   unsigned int rand_val = (uintptr_t)arg;
@@ -71,7 +71,7 @@ reader (void *arg)
   return (0);
 }
 
-static int
+static void*
 swapper (void *arg)
 {
   unsigned int rand_val = (uintptr_t)arg;
@@ -89,7 +89,7 @@ swapper (void *arg)
   return (0);
 }
 
-static int
+static void*
 mutator (void *arg)
 {
   unsigned int rand_val = (uintptr_t)arg;
@@ -128,20 +128,20 @@ int main ()
       array_2[i] = make_obj (xrand (&seed));
     }
 
-  thrd_t thrs[N_THREADS * 3];
+  pthread_t thrs[N_THREADS * 3];
   int n_thr = (int)(sizeof (thrs) / sizeof (thrs[0]));
 
   for (int i = 0; i < n_thr; ++i)
     {
-      int (*fn) (void *) = (i % 3) == 0 ?
+      void* (*fn) (void *) = (i % 3) == 0 ?
         reader : ((i % 3) == 1 ? swapper : mutator);
-      if (thrd_create (&thrs[i], fn, (void *)(uintptr_t)seed) != thrd_success)
+      if (pthread_create (&thrs[i], NULL, fn, (void *)(uintptr_t)seed) < 0)
         abort ();
     }
 
   puts ("joining threads");
   for (int i = 0; i < n_thr; ++i)
-    thrd_join (thrs[i], NULL);
+    pthread_join (thrs[i], NULL);
 
   for (int i = 0; i < N_ELEM; ++i)
     {
