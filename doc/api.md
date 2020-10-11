@@ -58,7 +58,7 @@ struct myt
 
 void myt_fini (void *arg)
 {
-  struct myt *p = (struct my *)((char *)arg - offsetof (struct myt, sref));
+  struct myt *p = (struct myt *)((char *)arg - offsetof (struct myt, sref));
   /* Use the full object. */
 }
 ```
