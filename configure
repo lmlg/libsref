@@ -27,7 +27,7 @@ Optional features:
   --enable-warnings       build with extensive warnings [yes]
   --enable-shared         build shared library [yes]
   --enable-static         build static library [no]
-  --max-finalizers=N      maximum number of pending finalizers
+  --max-deltas=N          maximum number of temporary deltas
 
 Environment variables you may set:
   CC                      C compiler [auto detected]
