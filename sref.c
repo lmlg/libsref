@@ -154,7 +154,6 @@ dlist_splice (Dlist *head, Dlist *dst)
  */
 
 static const uintptr_t GP_PHASE_BIT = 1;
-static const uintptr_t GP_NEST_MASK = ~GP_PHASE_BIT;
 
 typedef struct
 {
@@ -278,7 +277,7 @@ static inline int
 local_state (SrefData *dp)
 {
   uintptr_t val = xatomic_load_acq (&dp->counter);
-  if (!(val & GP_NEST_MASK))
+  if (!(val >> GP_PHASE_BIT))
     return (STATE_INACTIVE);
   else if (!((val ^ registry_counter ()) & GP_PHASE_BIT))
     return (STATE_ACTIVE);
@@ -409,7 +408,7 @@ void sref_read_enter (void)
 {
   SrefData *self = sref_local ();
   uintptr_t value = local_counter (self);
-  if (!(value & GP_NEST_MASK))
+  if (!(value >> GP_PHASE_BIT))
     { /* A grace period has elapsed, so we can reset the 'flush' flag. */
       value = registry_counter ();
       self->cache[value & GP_PHASE_BIT].flush = 0;
