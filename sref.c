@@ -169,6 +169,7 @@ typedef struct
 {
   SrefTable refs;
   SrefTable unrefs;
+  int flush;
 } SrefCache;
 
 /* Global variables initialized in 'sref_init'. */
@@ -194,7 +195,6 @@ typedef struct
   Dlist link;
   uintptr_t counter;
   SrefCache cache[2];
-  int flush;
 } SrefData;
 
 /* Thread-specific descriptor for sref operations. */
@@ -410,7 +410,10 @@ void sref_read_enter (void)
   SrefData *self = sref_local ();
   uintptr_t value = local_counter (self);
   if (!(value & GP_NEST_MASK))
-    value = registry_counter ();
+    { /* A grace period has elapsed, so we can reset the 'flush' flag. */
+      value = registry_counter ();
+      self->cache[value & GP_PHASE_BIT].flush = 0;
+    }
 
   uintptr_t nval = value + (1 << GP_PHASE_BIT);
   assert (nval > value);
@@ -424,7 +427,7 @@ sref_flush_impl (SrefData *self, uintptr_t value)
     /* We are currently in a critical section, and can't flush our deltas. */
     return (-1);
 
-  self->flush = 0;
+  self->cache[value & GP_PHASE_BIT].flush = 0;
   registry_sync (1);
   return (0);
 }
@@ -438,7 +441,7 @@ void sref_read_exit (void)
   value -= 1 << GP_PHASE_BIT;
   xatomic_store_rel (&self->counter, value);
 
-  if (self->flush)
+  if (self->cache[value & GP_PHASE_BIT].flush)
     sref_flush_impl (self, value);
 }
 
@@ -448,10 +451,11 @@ sref_acq_rel (void *refptr, intptr_t delta, size_t off)
   assert (refptr);
   SrefData *self = sref_local ();
   uintptr_t idx = registry_counter () & GP_PHASE_BIT;
-  SrefTable *tp = (SrefTable *)((char *)&self->cache[idx] + off);
+  SrefCache *cache = &self->cache[idx];
+  SrefTable *tp = (SrefTable *)((char *)cache + off);
 
-  self->flush += sref_add (tp, refptr, delta, &idx);
-  if (self->flush > 1 && sref_flush_impl (self, local_counter (self)) < 0)
+  cache->flush += sref_add (tp, refptr, delta, &idx);
+  if (cache->flush > 1 && sref_flush_impl (self, local_counter (self)) < 0)
     { /* This is an emergency situation. Our cache is full, and we are inside
        * a read-side critical section, and thus can't flush deltas. So we have
        * to resort to adding this sref pointer to the review list. We use the
@@ -529,9 +533,13 @@ sref_atexit (void)
   sref_data_fini (&local_data);   /* avoid sref_local. */
 }
 
+static int sref_initialized;
+
 int sref_lib_init (void)
 {
-  if (xkey_create (&reg_key, sref_data_fini) < 0)
+  if (sref_initialized)
+    return (0);
+  else if (xkey_create (&reg_key, sref_data_fini) < 0)
     return (-1);
   else if (xmutex_init (&registry.td_lock) < 0)
     {
@@ -553,6 +561,7 @@ int sref_lib_init (void)
     }
 
   dlist_init_head (&registry.root);
+  sref_initialized = 1;
   return (0);
 }
 

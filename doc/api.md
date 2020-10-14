@@ -30,12 +30,14 @@ Initializes the library so the rest of the API can be used. Returns 0 on
 success and a negative value otherwise. If any call to a libsref function
 is made before initializing the library, the results are undefined.
 
+This function can be safely called more than once.
+
 ```C
 void sref_lib_version (int *major, int *minor);
 ```
 
 Get the major and minor version for the library. This is useful to make
-sure that you're linking against a supported version at runtime.
+sure that you're linking against a compatible version at runtime.
 
 ```C
 sref_init (void *ptr, void (*fini) (void *));
