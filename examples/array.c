@@ -9,7 +9,6 @@
 typedef struct
 {
   Sref base;
-  int used;
   int value;
 } Object;
 
@@ -40,7 +39,6 @@ make_obj (int value)
 
   sref_init (p, fini_obj);
   p->value = value;
-  p->used = 0;
   atomic_fetch_add (&n_existing, 1ul);
   return (p);
 }
