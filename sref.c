@@ -29,7 +29,7 @@ typedef struct
 } SrefDelta;
 
 #ifndef SREF_NDELTAS
-  #define SREF_NDELTAS   128
+#  define SREF_NDELTAS   128
 #endif
 
 #if (SREF_NDELTAS & (SREF_NDELTAS - 1)) != 0
@@ -73,7 +73,7 @@ sref_add (SrefTable *tp, void *ptr, intptr_t add, uintptr_t *outp)
 }
 
 static void
-sref_merge (SrefTable *dst, SrefTable *src, intptr_t add)
+sref_merge (SrefTable *dst, SrefTable *src)
 {
   uintptr_t idx;
   for (unsigned int i = 0, j = 0; j < src->n_used; ++i)
@@ -82,7 +82,7 @@ sref_merge (SrefTable *dst, SrefTable *src, intptr_t add)
       if (!dp->ptr)
         continue;
 
-      int rv = sref_add (dst, dp->ptr, add, &idx);
+      int rv = sref_add (dst, dp->ptr, dp->delta, &idx);
       dp->ptr = NULL;
       --src->n_used;
 
@@ -512,8 +512,8 @@ sref_data_fini (XKEY_ARG (void *ptr))
   uintptr_t idx = registry_counter () & GP_PHASE_BIT;
   SrefCache *cache = self->cache;
 
-  sref_merge (&cache[idx].refs, &cache[idx ^ GP_PHASE_BIT].refs, 1);
-  sref_merge (&cache[idx].unrefs, &cache[idx ^ GP_PHASE_BIT].unrefs, -1);
+  sref_merge (&cache[idx].refs, &cache[idx ^ GP_PHASE_BIT].refs);
+  sref_merge (&cache[idx].unrefs, &cache[idx ^ GP_PHASE_BIT].unrefs);
 
   if (cache[idx].refs.n_used || cache[idx].unrefs.n_used)
     registry_sync (0);
