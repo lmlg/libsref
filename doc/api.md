@@ -2,7 +2,7 @@
 This document describes the public interface as exposed by libsref.
 
 ## Headers
-The header <libsref.h> contains all the declarations needed to use the library.
+The header <sref.h> contains all the declarations needed to use the library.
 
 ## Types
 libsref defines 2 types: **SrefAtFork** and **Sref**
