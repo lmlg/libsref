@@ -491,7 +491,14 @@ void sref_release (void *refptr)
 int sref_flush (void)
 {
   SrefData *self = sref_local ();
-  return (sref_flush_impl (self, local_counter (self)));
+  uintptr_t value = local_counter (self);
+  int ret = sref_flush_impl (self, value);
+
+  if (ret < 0)
+    /* If we didn't manage to flush, set the flat to do it ASAP. */
+    self->cache[value & GP_PHASE_BIT].flush = 1;
+
+  return (ret);
 }
 
 #ifndef XKEY_ARG
