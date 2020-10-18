@@ -7,7 +7,7 @@ This document specifies the design decisions for libsref.
 Reference counting is a method for managing memory. With reference counting,
 an object has an associated _reference count_ - an integer that specifies
 the number of users that  particular object has. Every object starts with a
-reference count of 1, and each time it used this count is incremented;
+reference count of 1, and each time it is used, this count is incremented;
 similarly, when it is no longer used, the count drops by 1. When the reference
 count reaches 0, it is deallocated and no longer valid.
 
@@ -39,6 +39,12 @@ reference counted objects in a multithreaded situation. Unless the counter is
 aligned to a cache line, there is expected to be a lot of false sharing, but
 if it **is** aligned, then it comes at the price of much bigger objects.
 
+Furthermore, it introduces a class of errors that isn't easy to handle or
+reason about: How should a program behave when accessing an object whose count
+has unexpectedly drop to 0 ? Should it raise an exception, or return a null
+pointer ? It seems that most options would severly penalize the user for a
+problem that isn't really their fault.
+
 ## Read side critical sections
 
 As an alternative, libsref provides an implementation of _critical sections_,
@@ -50,13 +56,13 @@ burden on the memory reclamation side.
 ## Implementing reference counting on top of RCU
 
 RCU by itself doesn't have anything to do with reference counting - It is
-merely concerned by memory deallocation and critical sectons. libsref thus
+merely concerned with memory deallocation and critical sections. libsref thus
 implements reference counting with RCU as support.
 
 When _acquiring_ or _releasing_ a reference counted object in libsref, its
 counter isn't modified in any way. Instead, the object is placed in a
 thread-local hash table that maps pointers to _deltas_, an integer that
-records the temporary difference that needs to be applied by a thread.
+records the temporary difference that needs to be applied to the counter.
 
 The tables used by the threads have a fixed capacity, and so when a certain
 occupancy is reached, the reclamation phase begins. A global lock is acquired,
@@ -77,9 +83,9 @@ objects increase. The reason being, most operations have much better
 locality of reference by virtue of using (mostly) thread-local data.
 
 However, this also means that object destruction can be delayed for long
-periods of time, because deltas are flushed periodically. In order to mitigate
-this added latency, libsref provides a way for applications to forcefully flush
-the deltas of every thread, with 'sref_flush'.
+periods of time, because deltas are not flushed immediately. To mitigate this
+added latency, libsref provides a way for applications to forcefully flush the
+deltas of every thread, with 'sref_flush'.
 
 ## Limitations
 
