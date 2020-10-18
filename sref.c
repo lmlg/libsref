@@ -462,13 +462,12 @@ sref_acq_rel (void *refptr, intptr_t delta, size_t off)
 
       Sref *sp = (Sref *)refptr;
       assert (sp == tp->deltas[idx].ptr);
-      xmutex_lock (&registry.td_lock);
-
       tp->deltas[idx].ptr = NULL;
       tp->deltas[idx].delta = 0;
       --tp->n_used;
-      sp->refcnt += delta;
 
+      xmutex_lock (&registry.td_lock);
+      sp->refcnt += delta;
       if (!sp->next)
         {
           sp->next = registry.review;
