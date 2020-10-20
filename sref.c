@@ -36,8 +36,7 @@ typedef struct
 #  error "number of deltas must be a power of 2"
 #endif
 
-/* These tables are used to store the refcounted pointers and their deltas;
- * the accumulated increments and decrements produced by a specific thread. */
+/* Mapping of pointers to deltas. */
 
 typedef struct
 {
@@ -495,7 +494,7 @@ int sref_flush (void)
   int ret = sref_flush_impl (self, value);
 
   if (ret < 0)
-    /* If we didn't manage to flush, set the flat to do it ASAP. */
+    /* If we didn't manage to flush, set the flag to do it ASAP. */
     self->cache[value & GP_PHASE_BIT].flush = 1;
 
   return (ret);

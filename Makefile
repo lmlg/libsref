@@ -44,7 +44,7 @@ libsref.$(STATIC_EXT): $(OBJS)
 	$(RANLIB) $@
 
 libsref.$(DYNAMIC_EXT): $(LOBJS)
-	$(CC) -fPIC -shared $(CFLAGS) -o $@ $(LOBJS)
+	$(CC) $(PIC_FLAG) -shared $(CFLAGS) -o $@ $(LOBJS)
 
 install: $(ALL_LIBS)
 	mkdir -p $(includedir)/sref
