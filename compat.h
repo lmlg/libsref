@@ -163,6 +163,7 @@ xkey_set (xkey_t *key, void (*fn) (void))
 #define xkey_delete(key)       ((void)(key))
 
 #define XKEY_ARG(arg)
+#define XKEY_LOCAL(x, y)   x
 
 #define xthread_local   __declspec(thread)
 

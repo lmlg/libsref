@@ -515,13 +515,14 @@ int sref_flush (void)
 }
 
 #ifndef XKEY_ARG
-#  define XKEY_ARG(arg)   arg
+#  define XKEY_ARG(arg)      arg
+#  define XKEY_LOCAL(x, y)   y
 #endif
 
 static void
 sref_data_fini (XKEY_ARG (void *ptr))
 {
-  SrefData *self = &local_data;
+  SrefData *self = XKEY_LOCAL (&local_data, ptr);
   if (!dlist_linked_p (&self->link))
     return;
 
