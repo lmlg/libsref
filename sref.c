@@ -416,6 +416,7 @@ void sref_read_enter (void)
     { /* A grace period has elapsed, so we can reset the 'flush' flag. */
       value = registry_counter ();
       self->cache[value & GP_PHASE_BIT].flush = 0;
+      self->n_ops = 0;
     }
 
   uintptr_t nval = value + (1 << GP_PHASE_BIT);
