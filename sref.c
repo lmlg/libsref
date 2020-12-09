@@ -36,6 +36,10 @@ typedef struct
 #  error "number of deltas must be a power of 2"
 #endif
 
+#ifndef SREF_NMAXOPS
+#  define SREF_NMAXOPS   1024
+#endif
+
 /* Mapping of pointers to deltas. */
 
 typedef struct
@@ -192,6 +196,7 @@ typedef struct
 {
   Dlist link;
   uintptr_t counter;
+  uintptr_t n_ops;
   SrefCache cache[2];
 } SrefData;
 
@@ -426,6 +431,7 @@ sref_flush_impl (SrefData *self, uintptr_t value)
     return (-1);
 
   self->cache[value & GP_PHASE_BIT].flush = 0;
+  self->n_ops = 0;
   registry_sync (1);
   return (0);
 }
@@ -444,6 +450,13 @@ void sref_read_exit (void)
 }
 
 static void
+sref_update_nops (SrefData *self, SrefCache *cache)
+{
+  if (++self->n_ops >= SREF_NMAXOPS && cache->flush < 2)
+    ++cache->flush;
+}
+
+static void
 sref_acq_rel (void *refptr, intptr_t delta, size_t off)
 {
   assert (refptr);
@@ -452,6 +465,7 @@ sref_acq_rel (void *refptr, intptr_t delta, size_t off)
   SrefCache *cache = &self->cache[idx];
   SrefTable *tp = (SrefTable *)((char *)cache + off);
 
+  sref_update_nops (self, cache);
   cache->flush += sref_add (tp, refptr, delta, &idx);
   if (cache->flush > 1 && sref_flush_impl (self, local_counter (self)) < 0)
     { /* This is an emergency situation. Our cache is full, and we are inside

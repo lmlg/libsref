@@ -96,6 +96,20 @@ test_rcu_limits (void)
   sref_acquire (&objs[1]);
   sref_read_exit ();
   ASSERT (rcu_obj_counter == 1);
+
+  Object single;
+  sref_init (&single, fini_basic);
+  rcu_obj_counter = 1;
+  sref_flush ();
+
+  for (int i = 0; i < SREF_NMAXOPS / 2; ++i)
+    {
+      sref_acquire (&single);
+      sref_release (&single);
+    }
+
+  sref_release (&single);
+  ASSERT (rcu_obj_counter == 0);
 }
 
 static unsigned int

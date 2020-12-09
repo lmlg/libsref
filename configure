@@ -28,6 +28,7 @@ Optional features:
   --enable-shared         build shared library [yes]
   --enable-static         build static library [no]
   --max-deltas=N          maximum number of temporary deltas
+  --max-operations=N      maximum number of operations before flushing
 
 Environment variables you may set:
   CC                      C compiler [auto detected]
@@ -87,6 +88,7 @@ warnings=yes
 shared=yes
 static=no
 maxdeltas=256
+maxops=1024
 
 for arg ; do
 case "$arg" in
@@ -108,6 +110,7 @@ case "$arg" in
   --host=*|--target=*) target=${arg#*=} ;;
   --build=*) build=${arg#*=} ;;
   --max-deltas=*) maxdeltas=${arg#*=} ;;
+  --max-operations=*) maxops=${arg#*=} ;;
   -* ) fail "$0: unknown option '$arg'" ;;
   CC=*) CC=${arg#*=} ;;
   CFLAGS=*) CFLAGS=${arg#*=} ;;
@@ -233,6 +236,11 @@ case $maxdeltas in
   *) ;;
 esac
 
+case $maxops in
+  ''|*[!0-9]*) fail "--max-operations must be an integer" ;;
+  *) ;;
+esac
+
 # generate version file
 version=$(cat $srcdir/VERSION)
 major=$(echo $version | cut -d. -f1)
@@ -255,7 +263,7 @@ prefix = $prefix
 libdir = $libdir
 includedir = $includedir
 CC = $CC
-CFLAGS = $CFLAGS -DSREF_NDELTAS=$maxdeltas
+CFLAGS = $CFLAGS -DSREF_NDELTAS=$maxdeltas -DSREF_NMAXOPS=$maxops
 CFLAGS_AUTO = $CFLAGS_AUTO
 CFLAGS_EXTRA = $CFLAGS_EXTRA
 LDFLAGS = $LDFLAGS
