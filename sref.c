@@ -550,7 +550,7 @@ sref_data_fini (XKEY_ARG (void *ptr))
 static void
 sref_atexit (void)
 {
-  sref_data_fini (&local_data);   /* avoid sref_local. */
+  sref_data_fini (XKEY_ARG (&local_data));   /* avoid sref_local. */
 }
 
 static int sref_initialized;
